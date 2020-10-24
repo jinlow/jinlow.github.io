@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on My blog</title>
+    <link>/post/</link>
+    <description>Recent content in Posts on My blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Sat, 24 Oct 2020 14:30:21 -0500</lastBuildDate><atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Switching from MacOS to Linux</title>
+      <link>/switching-to-linux/</link>
+      <pubDate>Sat, 24 Oct 2020 14:30:21 -0500</pubDate>
+      
+      <guid>/switching-to-linux/</guid>
+      <description>OS Hopping with the Dell XPS 7590 the beginning: macOS After 6 years with my trusty 2014 MacBook Pro, I finally decided to make the jump and upgrade my laptop. I wanted something with a little larger screen realestate, more RAM and a more powerful CPU. My Mac has a 13 inch screen, and as I got more used to my oversized monitors I use at work, developing projects at home on such a little screen became less appealing.</description>
+    </item>
+    
+    <item>
+      <title>A Stratchbook: Identify Business Types by Name</title>
+      <link>/identify-business-types-by-name/</link>
+      <pubDate>Fri, 23 Oct 2020 20:44:26 -0500</pubDate>
+      
+      <guid>/identify-business-types-by-name/</guid>
+      <description>A Scratchbook Scratchbooks are jupyter notebooks that I create to work through an idea or a new methodology. They are usually a little half baked, and usually serve as a rough sketch for a larger project.
+Searching for a Word in Business Names In this notebook we will look at how to identify certain type of business, just by the name part. For example, say we want to identify businesses that are likely grocery stores.</description>
+    </item>
+    
+  </channel>
+</rss>

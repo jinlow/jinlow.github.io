@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html prefix="og: http://ogp.me/ns#">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>A Stratchbook: Identify Business Types by Name &middot; </title>
+        <meta name="description" content="A Scratchbook Scratchbooks are jupyter notebooks that I create to work through an idea or a new methodology. They are usually a little half baked, and usually serve as a rough sketch for a larger project.
+Searching for a Word in Business Names In this notebook we will look at how to identify certain type of business, just by the name part. For example, say we want to identify businesses that are likely grocery stores.">
+        <meta name="HandheldFriendly" content="True">
+        <meta name="MobileOptimized" content="320">
+        <meta name="generator" content="Hugo 0.76.5" />
+        <meta name="robots" content="index,follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta property="og:title" content="A Stratchbook: Identify Business Types by Name">
+<meta property="og:description" content="A Scratchbook Scratchbooks are jupyter notebooks that I create to work through an idea or a new methodology. They are usually a little half baked, and usually serve as a rough sketch for a larger project.
+Searching for a Word in Business Names In this notebook we will look at how to identify certain type of business, just by the name part. For example, say we want to identify businesses that are likely grocery stores.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/identify-business-types-by-name/">
+        <link rel="stylesheet" href="/dist/site.css">
+        <link rel="stylesheet" href="/dist/syntax.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,400,600,700,300&subset=latin,cyrillic-ext,latin-ext,cyrillic">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+        
+        <style>
+    .site-title a, .button-square {
+        background: #189185;
+    }
+    a {
+        color: #189185;
+    }
+    </style>
+    
+        
+        
+        
+
+    </head>
+    <body>
+        
+
+        <div id="wrapper">
+            <header class="site-header">
+                <div class="container">
+                    <div class="site-title-wrapper">
+                        
+                            <h1 class="site-title">
+                                <a href="/">My blog</a>
+                            </h1>
+                        
+                        
+                        
+                        
+                        
+                        
+                            <a class="button-square button-social hint--top" data-hint="Github" aria-label="Github" href="https://github.com/jinlow" rel="me">
+                                <i class="fa fa-github-alt" aria-hidden="true"></i>
+                            </a>
+                        
+                        
+                        
+                            <a class="button-square button-social hint--top" data-hint="LinkedIn" aria-label="LinkedIn" href="https://www.linkedin.com/in/james-d-inlow/" rel="me">
+                                <i class="fa fa-linkedin" aria-hidden="true"></i>
+                            </a>
+                        
+                        
+                    </div>
+
+                    <ul class="site-nav">
+                        
+    <li class="site-nav-item">
+        <a href="/page/about">About</a>
+    </li>
+
+    <li class="site-nav-item">
+        <a href="/">Blog</a>
+    </li>
+
+
+                    </ul>
+                </div>
+            </header>
+
+            <div id="container">
+
+
+<div class="container">
+    <article class="post-container" itemscope="" itemtype="http://schema.org/BlogPosting">
+        <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">A Stratchbook: Identify Business Types by Name</h1>
+    
+    <p class="post-date post-line">
+        <span>Published <time datetime="2020-10-23" itemprop="datePublished">Fri, Oct 23, 2020</time></span>
+        <span>by</span>
+        <span itemscope="" itemprop="author" itemtype="https://schema.org/Person">
+            <span itemprop="name">
+                <a href="#" itemprop="url" rel="author"></a>
+            </span>
+        </span>
+    </p>
+    
+</header>
+
+        <div class="post-content clearfix" itemprop="articleBody">
+    
+
+    <h2 id="a-scratchbook">A Scratchbook</h2>
+<p>Scratchbooks are jupyter notebooks that I create to work through an idea or a new methodology. They are usually a little half baked, and usually serve as a rough sketch for a larger project.</p>
+<h1 id="searching-for-a-word-in-business-names">Searching for a Word in Business Names</h1>
+<p>In this notebook we will look at how to identify certain type of business, just by the name part. For example, say we want to identify businesses that are likely grocery stores. Simply checking if the business name has grocery in it would be too narrow. We want to find other words that appear in business name data that have similar semantic meaning that we could search for. Having these different words, will allow our search to be more robust.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">csv</span>
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">re</span>
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">string</span>
+
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">annoy</span>
+<span style="color:#6ab825;font-weight:bold">import</span> <span style="color:#447fcf;text-decoration:underline">spacy</span>
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">scipy.spatial.distance</span> <span style="color:#6ab825;font-weight:bold">import</span> cosine
+<span style="color:#6ab825;font-weight:bold">from</span> <span style="color:#447fcf;text-decoration:underline">spacy.lemmatizer</span> <span style="color:#6ab825;font-weight:bold">import</span> Lemmatizer
+</code></pre></div><p>First we will just read in the data, we will just put it in a dictionary.<br>
+The data came from the following kaggle dataset:<br>
+<a href="https://www.kaggle.com/peopledatalabssf/free-7-million-company-dataset">https://www.kaggle.com/peopledatalabssf/free-7-million-company-dataset</a><br>
+This is 7MM business from around the world.</p>
+<p>I should be using something like pandas, but sometimes it&rsquo;s fun to just use the base python csv package.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">with</span> <span style="color:#24909d">open</span>(<span style="color:#ed9d13">&#34;companies_sorted.csv&#34;</span>, <span style="color:#ed9d13">&#34;r&#34;</span>) <span style="color:#6ab825;font-weight:bold">as</span> bnm_csv:
+    csv_reader = csv.DictReader(bnm_csv)
+    bus_dat = OrderedDict()
+    <span style="color:#6ab825;font-weight:bold">for</span> idx, r <span style="color:#6ab825;font-weight:bold">in</span> <span style="color:#24909d">enumerate</span>(csv_reader):
+        <span style="color:#6ab825;font-weight:bold">if</span> idx == <span style="color:#3677a9">0</span>:
+            <span style="color:#6ab825;font-weight:bold">for</span> col <span style="color:#6ab825;font-weight:bold">in</span> r:
+                bus_dat[col] = [r[col]]
+        <span style="color:#6ab825;font-weight:bold">else</span>:
+            <span style="color:#6ab825;font-weight:bold">for</span> col <span style="color:#6ab825;font-weight:bold">in</span> r:
+                bus_dat[col].append(r[col])
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">[col_name <span style="color:#6ab825;font-weight:bold">for</span> col_name <span style="color:#6ab825;font-weight:bold">in</span> bus_dat]
+</code></pre></div><pre><code>['',
+ 'name',
+ 'domain',
+ 'year founded',
+ 'industry',
+ 'size range',
+ 'locality',
+ 'country',
+ 'linkedin url',
+ 'current employee estimate',
+ 'total employee estimate']
+</code></pre>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">for</span> i, j <span style="color:#6ab825;font-weight:bold">in</span> <span style="color:#24909d">zip</span>(bus_dat[<span style="color:#ed9d13">&#34;name&#34;</span>][<span style="color:#3677a9">0</span>:<span style="color:#3677a9">5</span>], bus_dat[<span style="color:#ed9d13">&#34;domain&#34;</span>][<span style="color:#3677a9">0</span>:<span style="color:#3677a9">5</span>]):
+    <span style="color:#6ab825;font-weight:bold">print</span>(f<span style="color:#ed9d13">&#34;{i}, {j}&#34;</span>)
+</code></pre></div><pre><code>ibm, ibm.com
+tata consultancy services, tcs.com
+accenture, accenture.com
+us army, goarmy.com
+ey, ey.com
+</code></pre>
+<p>So we only need the first column, which has all of the business words. This is an interesting dataset, it would be fun to explore it in another notebook in the future.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">bus_name = bus_dat[<span style="color:#ed9d13">&#34;name&#34;</span>]
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#24909d">len</span>(bus_name)
+</code></pre></div><pre><code>7173426
+</code></pre>
+<p>Next, we are going to go through some basic text preprocessing:</p>
+<ul>
+<li>Split all of the words into the individual tokens.</li>
+<li>Remove numbers and punctuation.</li>
+<li>Convert all words to lowercase.</li>
+</ul>
+<p>Next, we will go through the list, and split all items on spaces.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">bus_parts = [
+    word <span style="color:#6ab825;font-weight:bold">for</span> name_list <span style="color:#6ab825;font-weight:bold">in</span> [name.split() <span style="color:#6ab825;font-weight:bold">for</span> name <span style="color:#6ab825;font-weight:bold">in</span> bus_name] <span style="color:#6ab825;font-weight:bold">for</span> word <span style="color:#6ab825;font-weight:bold">in</span> name_list
+]
+
+punc_n_nums = string.punctuation + <span style="color:#ed9d13">&#34;&#34;</span>.join([<span style="color:#24909d">str</span>(i) <span style="color:#6ab825;font-weight:bold">for</span> i <span style="color:#6ab825;font-weight:bold">in</span> <span style="color:#24909d">range</span>(<span style="color:#3677a9">10</span>)])
+<span style="color:#999;font-style:italic"># Strip punctuation and numbers</span>
+bus_parts = [s.translate(<span style="color:#24909d">str</span>.maketrans(<span style="color:#ed9d13">&#34;&#34;</span>, <span style="color:#ed9d13">&#34;&#34;</span>, string.punctuation)) <span style="color:#6ab825;font-weight:bold">for</span> s <span style="color:#6ab825;font-weight:bold">in</span> bus_parts]
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">bus_parts[<span style="color:#3677a9">0</span>:<span style="color:#3677a9">10</span>]
+</code></pre></div><pre><code>['ibm',
+ 'tata',
+ 'consultancy',
+ 'services',
+ 'accenture',
+ 'us',
+ 'army',
+ 'ey',
+ 'hewlettpackard',
+ 'cognizant']
+</code></pre>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#24909d">len</span>(bus_parts)
+</code></pre></div><pre><code>21455275
+</code></pre>
+<p>Now we are going to dedup the words, we will do this several times throughout the process.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">bus_parts = <span style="color:#24909d">list</span>(<span style="color:#24909d">set</span>([s.lower() <span style="color:#6ab825;font-weight:bold">for</span> s <span style="color:#6ab825;font-weight:bold">in</span> bus_parts <span style="color:#6ab825;font-weight:bold">if</span> s != <span style="color:#ed9d13">&#34;&#34;</span>]))
+</code></pre></div><h2 id="process-names-with-spacy">Process Names with spaCy</h2>
+<p>Next we will process the texts using <code>spaCy</code>. A few things we want to do.</p>
+<ul>
+<li>Remove stop words.</li>
+<li>lemmatize words</li>
+</ul>
+<p>This is a very cool package for natural language processing, check out the docs for some more details, (<a href="https://spacy.io/)">https://spacy.io/)</a>.</p>
+<p>After this we will dedup the words, and then get the word vectors.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">nlp = spacy.load(<span style="color:#ed9d13">&#34;en_core_web_md&#34;</span>)
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">proc_words = <span style="color:#24909d">list</span>(<span style="color:#24909d">set</span>([s <span style="color:#6ab825;font-weight:bold">for</span> s <span style="color:#6ab825;font-weight:bold">in</span> bus_parts <span style="color:#6ab825;font-weight:bold">if</span> s <span style="color:#6ab825;font-weight:bold">not</span> <span style="color:#6ab825;font-weight:bold">in</span> nlp.Defaults.stop_words]))
+</code></pre></div><p>Next we will lemmatize all of the word parts.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">lemmatizer = Lemmatizer(nlp.vocab.lookups)
+</code></pre></div><p>This will lemmatize the word if it&rsquo;s in the vocab, otherwise just return the word. Lemmatization in natural language processing is the act of normalizing words back to their root form. The following shows some examples of this.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">lemmatizer.lookup(<span style="color:#ed9d13">&#34;going&#34;</span>), lemmatizer.lookup(<span style="color:#ed9d13">&#34;caring&#34;</span>), lemmatizer.lookup(
+    <span style="color:#ed9d13">&#34;someCrazyWord&#34;</span>
+)
+</code></pre></div><pre><code>('go', 'care', 'someCrazyWord')
+</code></pre>
+<p>Now we will apply this to all of the words we are working with.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">proc_lemma = [lemmatizer.lookup(w) <span style="color:#6ab825;font-weight:bold">for</span> w <span style="color:#6ab825;font-weight:bold">in</span> proc_words]
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#999;font-style:italic"># Drop dupicates</span>
+lemma_sub = <span style="color:#24909d">list</span>(<span style="color:#24909d">set</span>(proc_lemma))
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#24909d">len</span>(lemma_sub)
+</code></pre></div><pre><code>2158126
+</code></pre>
+<p>Next, we will go through, and add all of our words, to a dictionary were the lemma is the key, and the word vector is the value.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">bwd = {}
+<span style="color:#6ab825;font-weight:bold">for</span> idx, w <span style="color:#6ab825;font-weight:bold">in</span> <span style="color:#24909d">enumerate</span>(lemma_sub):
+    <span style="color:#6ab825;font-weight:bold">if</span> nlp.vocab[w].has_vector:
+        bwd[w] = (idx, nlp.vocab[w].vector)
+</code></pre></div><p>Word vectors provide a way for us to represent words in vector space. One of the most common models for creating them is Word2Vec. The closer a word is to another word in vector space, the more similar the meanings are.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">def</span> <span style="color:#447fcf">word_cosine_similarity</span>(w1, w2, model):
+    <span style="color:#6ab825;font-weight:bold">return</span> <span style="color:#3677a9">1</span> - cosine(model.vocab[w1].vector, model.vocab[w2].vector)
+</code></pre></div><p>Other text similarity measurements, such as edit distance, or soundex are looking to see if the word has similar spelling. Word vectors consider semantic similarity instead.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">word_cosine_similarity(<span style="color:#ed9d13">&#34;farmer&#34;</span>, <span style="color:#ed9d13">&#34;framer&#34;</span>, nlp)
+</code></pre></div><pre><code>0.06580065190792084
+</code></pre>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">word_cosine_similarity(<span style="color:#ed9d13">&#34;farmer&#34;</span>, <span style="color:#ed9d13">&#34;agriculture&#34;</span>, nlp)
+</code></pre></div><pre><code>0.5305896997451782
+</code></pre>
+<p>Here we see the words &ldquo;farmer&rdquo; and &ldquo;farmer&rdquo; though spelled the same, are not very similar from a meaning perspective. However the words &ldquo;farmer&rdquo; and &ldquo;agriculture&rdquo; are much more similar.</p>
+<h3 id="query-word-vectors-with-annoy">Query Word Vectors with Annoy</h3>
+<p>Now we will query our word vectors using the package Annoy: <a href="https://github.com/spotify/annoy">https://github.com/spotify/annoy</a><br>
+This is a fabulous approximate nearest neighbors package that I use a lot for querying word vectors.</p>
+<p>Our goal here is to identify words that are similar to our main word of interest, grocery in this case. Finding all of these variation will give us a list of search terms to use to identify other businesses whose names have meanings similar to grocery store.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">aidx = annoy.AnnoyIndex(<span style="color:#3677a9">300</span>, <span style="color:#ed9d13">&#34;angular&#34;</span>)
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">for</span> i <span style="color:#6ab825;font-weight:bold">in</span> bwd.values():
+    aidx.add_item(*i)
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">aidx.build(n_trees=<span style="color:#3677a9">300</span>)
+</code></pre></div><pre><code>True
+</code></pre>
+<p>Now we can query the index and find the most similar words to our word of interest, &ldquo;grocery&rdquo;.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">groc_words = [lemma_sub[i] <span style="color:#6ab825;font-weight:bold">for</span> i <span style="color:#6ab825;font-weight:bold">in</span> aidx.get_nns_by_item(bwd[<span style="color:#ed9d13">&#34;grocery&#34;</span>][<span style="color:#3677a9">0</span>], <span style="color:#3677a9">20</span>)]
+groc_words
+</code></pre></div><pre><code>['grocery',
+ 'grocer',
+ 'minimart',
+ 'newsagency',
+ 'newsagent',
+ 'healthfood',
+ 'supermarket',
+ 'waitrose',
+ 'hypermarket',
+ 'supercenters',
+ 'store',
+ 'shoppings',
+ 'shopper',
+ 'shoping',
+ 'knish',
+ 'enoteca',
+ 'presliced',
+ 'delicatessen',
+ 'carryout',
+ 'bodega']
+</code></pre>
+<p>So not all of these words would exactly identify a grocery store, but it still provides us with more alternatives than just searching &ldquo;grocery&rdquo; alone.</p>
+<h3 id="final-search-terms">Final Search Terms</h3>
+<p>Finally, let&rsquo;s grab any variations of these words that may exist in our pre-lemmatized data. We will add these variations to our search terms.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">search_terms = {}
+<span style="color:#6ab825;font-weight:bold">for</span> w <span style="color:#6ab825;font-weight:bold">in</span> groc_words:
+    search_terms[w] = []
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">lemma_tuples = [(i, j) <span style="color:#6ab825;font-weight:bold">for</span> i, j <span style="color:#6ab825;font-weight:bold">in</span> <span style="color:#24909d">zip</span>(proc_lemma, proc_words) <span style="color:#6ab825;font-weight:bold">if</span> i <span style="color:#6ab825;font-weight:bold">in</span> groc_words]
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">lemma_tuples[<span style="color:#3677a9">0</span>:<span style="color:#3677a9">4</span>]
+</code></pre></div><pre><code>[('minimart', 'minimart'),
+ ('newsagent', 'newsagents'),
+ ('knish', 'knish'),
+ ('store', 'stored')]
+</code></pre>
+<p>We will append all of these variations into our search term dictionary.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">for</span> i, j <span style="color:#6ab825;font-weight:bold">in</span> lemma_tuples:
+    search_terms[i].append(j)
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">search_terms
+</code></pre></div><pre><code>{'grocery': ['grocery', 'groceries'],
+ 'grocer': ['grocer', 'grocers'],
+ 'minimart': ['minimart'],
+ 'newsagency': ['newsagency'],
+ 'newsagent': ['newsagents', 'newsagent'],
+ 'healthfood': ['healthfood'],
+ 'supermarket': ['supermarket', 'supermarkets'],
+ 'waitrose': ['waitrose'],
+ 'hypermarket': ['hypermarkets', 'hypermarket'],
+ 'supercenters': ['supercenters'],
+ 'store': ['stored', 'storing', 'store', 'stores'],
+ 'shoppings': ['shoppings'],
+ 'shopper': ['shopper', 'shoppers'],
+ 'shoping': ['shoping'],
+ 'knish': ['knish'],
+ 'enoteca': ['enoteca'],
+ 'presliced': ['presliced'],
+ 'delicatessen': ['delicatessen', 'delicatessens'],
+ 'carryout': ['carryout'],
+ 'bodega': ['bodega', 'bodegas']}
+</code></pre>
+<p>I am actually going to drop the &ldquo;store&rdquo; and &ldquo;newsagency&rdquo; terms.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#6ab825;font-weight:bold">del</span> search_terms[<span style="color:#ed9d13">&#34;newsagent&#34;</span>]
+<span style="color:#6ab825;font-weight:bold">del</span> search_terms[<span style="color:#ed9d13">&#34;newsagency&#34;</span>]
+<span style="color:#6ab825;font-weight:bold">del</span> search_terms[<span style="color:#ed9d13">&#34;store&#34;</span>]
+</code></pre></div><p>If I was doing this for a formal project, I would probably think through the best way to use these word variations to query the business names. Additionally I would try to also identify common misspellings of these words.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">grocery_name_parts = [p <span style="color:#6ab825;font-weight:bold">for</span> var <span style="color:#6ab825;font-weight:bold">in</span> search_terms.values() <span style="color:#6ab825;font-weight:bold">for</span> p <span style="color:#6ab825;font-weight:bold">in</span> var]
+</code></pre></div><p>We want to make sure we only are considering the word if it is the actual word, and not a subword.</p>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">grocery_pattern = <span style="color:#ed9d13">r</span><span style="color:#ed9d13">&#34;|&#34;</span>.join([f<span style="color:#ed9d13">&#34;^{i}$| {i}$| {i} |^{i} &#34;</span> <span style="color:#6ab825;font-weight:bold">for</span> i <span style="color:#6ab825;font-weight:bold">in</span> grocery_name_parts])
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">grocery_stores = [
+    name <span style="color:#6ab825;font-weight:bold">for</span> name <span style="color:#6ab825;font-weight:bold">in</span> bus_dat[<span style="color:#ed9d13">&#34;name&#34;</span>] <span style="color:#6ab825;font-weight:bold">if</span> <span style="color:#24909d">bool</span>(re.search(grocery_pattern, name))
+]
+</code></pre></div><div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#24909d">len</span>(grocery_stores)
+</code></pre></div><pre><code>2571
+</code></pre>
+<div class="highlight"><pre style="color:#d0d0d0;background-color:#202020;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">grocery_stores[<span style="color:#3677a9">0</span>:<span style="color:#3677a9">15</span>]
+</code></pre></div><pre><code>['shoppers drug mart',
+ 'wm morrison supermarkets plc',
+ 'waitrose',
+ 'c&amp;s wholesale grocers',
+ 'hannaford supermarkets',
+ 'woolworths supermarkets',
+ 'price chopper supermarkets',
+ 'ralphs grocery company',
+ 'shoppers stop',
+ 'shoprite supermarkets',
+ &quot;shaw's supermarkets&quot;,
+ 'save mart supermarkets',
+ 'southeastern grocers',
+ 'brookshire grocery company',
+ 'associated wholesale grocers']
+</code></pre>
+<p>As we can see we could use a process like this to easily identify a business type, a grocery store in our case, just using information from the business name.</p>
+
+</div>
+
+        <footer class="post-footer clearfix"><div class="share">
+            <a class="icon-twitter" href="https://twitter.com/share?text=A%20Stratchbook%3a%20Identify%20Business%20Types%20by%20Name&url=%2fidentify-business-types-by-name%2f"
+                onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;" aria-label="Share on Twitter">
+                <i class="fa fa-twitter" aria-hidden="true"></i>
+            </a>
+    </div>
+</footer>
+
+        
+    </article>
+</div>
+
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="container">
+                <div class="site-title-wrapper">
+                    <h1 class="site-title">
+                        <a href="/">My blog</a>
+                    </h1>
+                    <a class="button-square button-jump-top js-jump-top" href="#" aria-label="Back to Top">
+                        <i class="fa fa-angle-up" aria-hidden="true"></i>
+                    </a>
+                </div>
+
+                <p class="footer-copyright">
+                    <span>&copy; 2020 / Powered by <a href="https://gohugo.io/">Hugo</a></span>
+                </p>
+                <p class="footer-copyright">
+                    <span><a href="https://github.com/roryg/ghostwriter">Ghostwriter theme</a> By <a href="http://jollygoodthemes.com">JollyGoodThemes</a></span>
+                    <span>/ <a href="https://github.com/jbub/ghostwriter">Ported</a> to Hugo By <a href="https://github.com/jbub">jbub</a></span>
+                </p>
+            </div>
+        </footer>
+
+        <script src="/js/jquery-1.11.3.min.js"></script>
+        <script src="/js/jquery.fitvids.js"></script>
+        <script src="/js/scripts.js"></script>
+    </body>
+</html>
+

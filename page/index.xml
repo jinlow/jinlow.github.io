@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Pages on My blog</title>
+    <link>/page/</link>
+    <description>Recent content in Pages on My blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Fri, 03 Apr 2015 02:13:50 +0000</lastBuildDate><atom:link href="/page/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>About</title>
+      <link>/page/about/</link>
+      <pubDate>Fri, 03 Apr 2015 02:13:50 +0000</pubDate>
+      
+      <guid>/page/about/</guid>
+      <description>Hi!
+I&amp;rsquo;m James. I work as a data scientist for a company in the credit risk space. I like learning new things, and exploring ways to make my work more efficient. Most of my free time outside of work and technical endeavours is spent hanging out with my family, playing music, and watching profound movies.</description>
+    </item>
+    
+  </channel>
+</rss>
